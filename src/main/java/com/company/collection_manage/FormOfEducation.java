@@ -9,4 +9,13 @@ public enum  FormOfEducation {
             }
             return Result.toString();
         }
+        public static FormOfEducation NullString(String input) {
+            if(input == null || input.isEmpty()) {
+                return null;
+            }
+            else {
+             return FormOfEducation.values()[Integer.parseInt(input)];
+            }
+        }
+
 }

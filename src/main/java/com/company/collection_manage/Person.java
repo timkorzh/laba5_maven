@@ -39,4 +39,7 @@ public class Person {
     public void setLocation(Location location) {
         this.location = location;
     }
+
+    public static boolean ifPersonExists() { return true; }
 }
+

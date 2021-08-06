@@ -17,7 +17,7 @@ public class CountGreaterCommand extends AbstractCommand {
     @Override
     public void execute(String CommandArgs) {
         InputDevice device = new InputDevice();
-        int FOE;
+        Integer FOE;
 
         if(CommandArgs == null) {
         try {

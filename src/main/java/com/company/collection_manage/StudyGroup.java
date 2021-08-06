@@ -1,6 +1,8 @@
 package com.company.collection_manage;
 
+import java.rmi.server.UID;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 public class StudyGroup {
 
@@ -23,6 +25,7 @@ public class StudyGroup {
         this.groupAdmin = admin;
         creationDate = LocalDateTime.now();
         id = GroupCounter;
+
     }
 
     public void setStudentsCount(Integer studentsCount) {

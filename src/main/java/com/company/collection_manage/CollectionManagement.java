@@ -40,7 +40,7 @@ public class CollectionManagement {
                             "id: " + studyGroup.getid() + '\n' +
                             "StudyCounter: " + studyGroup.getStudentsCount() + '\n' +
                             "Coordinates" + '\n' + " X: " + studyGroup.getCoordinates().getX() + '\n' + " Y: " + studyGroup.getCoordinates().getY() + '\n' +
-                            "Admin Name: " + studyGroup.getGroupAdmin().getName() + '\n' + "Admin Passport: " + studyGroup.getGroupAdmin().getPassportID() + '\n' + "Admin Location: " + '\n' + "X: " + studyGroup.getGroupAdmin().getLocation().getX() + '\n' + "Y: " + studyGroup.getGroupAdmin().getLocation().getY() + '\n' + "Z: " + studyGroup.getGroupAdmin().getLocation().getZ() + '\n' +
+                            (studyGroup.getGroupAdmin() == null ? "Нет админа" : "Admin Name: " + studyGroup.getGroupAdmin().getName() + '\n' + "Admin Passport: " + studyGroup.getGroupAdmin().getPassportID() + '\n' + "Admin Location: " + '\n' + "X: " + studyGroup.getGroupAdmin().getLocation().getX() + '\n' + "Y: " + studyGroup.getGroupAdmin().getLocation().getY() + '\n' + "Z: " + studyGroup.getGroupAdmin().getLocation().getZ()) + '\n' +
                             "Creation Date: " + studyGroup.getCreationDate() + '\n' +
                             "Name: " + studyGroup.getName() + '\n' +
                             "Form of education: " + studyGroup.getFormOfEducation() + '\n' +

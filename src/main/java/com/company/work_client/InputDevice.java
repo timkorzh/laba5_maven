@@ -64,6 +64,9 @@ class FormOfEducationValidator implements IValidator {
 
     @Override
     public boolean IsValid(String input) {
+        if(input == null || input.isEmpty()) {
+            return true;
+        }
         try {
             Integer.parseInt(input);
             return(Integer.parseInt(input) < FormOfEducation.values().length);
@@ -92,6 +95,34 @@ class SemesterValidator implements IValidator {
     @Override
     public String ErrorMessage() {
         return "Введите одно из указанных чисел, уважаемый пекарь";
+    }
+}
+
+class AdminExistsValidator implements IValidator {
+
+    private boolean Exist = true;
+
+    public boolean getExist() {
+        return Exist;
+    }
+
+    @Override
+    public boolean IsValid(String input) {
+
+            if(input.isEmpty()) {
+                Exist = false;
+                return true;
+            }
+            if(input.matches("[Yy,Дд]\\w*")) {
+                return true;
+            } else {
+                return false;
+            }
+    }
+
+    @Override
+    public String ErrorMessage() {
+        return "Укажите, существует ли админ";
     }
 }
 
@@ -142,6 +173,7 @@ public class InputDevice {
         questions.add(new quiz("Число студентов в группе", new StudentsCountValidator(), "stCount", true));
         questions.add(new quiz("Форма обучения " + FormOfEducation.GetStringValues(), new FormOfEducationValidator(), "foedu", false));
         questions.add(new quiz("Семестр " + Semester.GetStringValues(), new SemesterValidator(), "sem", true));
+        questions.add(new quiz("У группы есть админ? Если нет, введите пустую строку" + Person.ifPersonExists(), new AdminExistsValidator() , "aExs", true));
         questions.add(new quiz("Имя админа группы(Фамилия Имя)", new AdminNameValidator(), "aName", true));
         questions.add(new quiz("Серия и номер паспорта(пример: 1234 123456) админа группы", new AdminPassportValidator(), "passport", false));
         questions.add(new quiz("Введите координаты в формате X(0,0); Y(0); Z(-1,0)", new AdminLocationValidator(), "aCoords", false));
@@ -162,6 +194,7 @@ public class InputDevice {
             this.Important = Important;
         }
     }
+
     public String GetScriptName() {
 
         StringBuilder Keys = new StringBuilder("\n" + "Ключи для ввода данных: ");
@@ -206,12 +239,22 @@ public class InputDevice {
 
     }
 
-    public int ReadFormOfEducation() throws InputMismatchException {
-        int FormEducation;
-
+    public Integer ReadFormOfEducation() throws InputMismatchException {
+        Integer FormEducation = null;
+        
         Scanner scanner = new Scanner(System.in);
         System.out.println("Введите FormOfEducation группы: " + FormOfEducation.GetStringValues());
-        FormEducation = scanner.nextInt();
+        String ConsoleReceiver = scanner.nextLine();
+        if(ConsoleReceiver == null) {
+            return null;
+        }
+        else {
+            try {
+               FormEducation = Integer.parseInt(ConsoleReceiver);
+            } catch (NumberFormatException e) {
+                e.printStackTrace();
+            }
+        }
         return FormEducation;
     }
 
@@ -325,20 +368,36 @@ public class InputDevice {
                         }
                     }
                 }
+            if (quiz.validator instanceof AdminExistsValidator) {
+                AdminExistsValidator admValid = (AdminExistsValidator)(quiz.validator);
+                if (!admValid.getExist()) {
+                    break;
+                }
+            }
             }
 
         for (quiz answer : questions) {
             System.out.println(answer.answer);
         }
-        Person Admin = GroupElement.getGroupAdmin();
-        if (questions.get(5).answer != null) {
-            Admin.setName(questions.get(5).answer);
-        }
-        if (questions.get(6).answer != null) {
-            Admin.setPassportID(questions.get(6).answer);
-        }
-        if (questions.get(7).answer != null) {
-            Admin.setLocation(new Location(questions.get(7).answer));
+        Person Admin = null;
+
+        AdminExistsValidator admValid = (AdminExistsValidator)(questions.get(5).validator);
+
+        if (questions.get(5).answer != null && admValid.getExist()) {
+            if (GroupElement.getGroupAdmin() == null) {
+                GroupElement.setGroupAdmin(new Person());
+            }
+                Admin = GroupElement.getGroupAdmin();
+
+            if (questions.get(6).answer != null) {
+                Admin.setName(questions.get(6).answer);
+            }
+            if (questions.get(7).answer != null) {
+                Admin.setPassportID(questions.get(7).answer);
+            }
+            if (questions.get(8).answer != null) {
+                Admin.setLocation(new Location(questions.get(8).answer));
+            }
         }
         if (questions.get(0).answer != null) {
             GroupElement.setName(questions.get(0).answer);
@@ -349,13 +408,15 @@ public class InputDevice {
         if (questions.get(2).answer != null) {
             GroupElement.setStudentsCount(Integer.parseInt(questions.get(2).answer));
         }
+        if(questions.get(3).answer.equals(null)) {
+            GroupElement.setFormOfEducation(null);
+        }
         if (questions.get(3).answer != null) {
             GroupElement.setFormOfEducation(FormOfEducation.values()[Integer.parseInt(questions.get(3).answer)]);
         }
         if (questions.get(4).answer != null) {
             GroupElement.setSemesterEnum(Semester.values()[Integer.parseInt(questions.get(4).answer)]);
         }
-
     }
 
     public void EditFromFile(StudyGroup studyGroup, String CommandArgs) {
@@ -377,8 +438,6 @@ public class InputDevice {
             System.out.println(answer.answer);
         }
 
-        Person Admin = studyGroup.getGroupAdmin();
-
         if (questions.get(0).answer != null) {
             studyGroup.setName(questions.get(0).answer);
         }
@@ -391,15 +450,25 @@ public class InputDevice {
         if (questions.get(3).answer != null) {
             studyGroup.setFormOfEducation(FormOfEducation.values()[Integer.parseInt(questions.get(3).answer)]);
         }
-        if (questions.get(4).answer !=null) {
+        if (questions.get(4).answer != null) {
             studyGroup.setSemesterEnum(Semester.values()[Integer.parseInt(questions.get(4).answer)]);
         }
-        Admin.setName(questions.get(5).answer);
-        if (questions.get(6).answer != null) {
-            Admin.setPassportID(questions.get(6).answer) ;
-        }
-        if (questions.get(7).answer != null) {
-            Admin.setLocation(new Location(questions.get(7).answer));
+        Person Admin;
+        AdminExistsValidator admValid = (AdminExistsValidator)(questions.get(5).validator);
+
+        if (questions.get(5).answer != null && admValid.getExist()) {
+
+            if (studyGroup.getGroupAdmin() == null) {
+                studyGroup.setGroupAdmin(new Person());
+            } 
+            Admin = new Person();
+            Admin.setName(questions.get(6).answer);
+            if (questions.get(7).answer != null) {
+                Admin.setPassportID(questions.get(7).answer);
+            }
+            if (questions.get(8).answer != null) {
+                Admin.setLocation(new Location(questions.get(8).answer));
+            }
         }
     }
 
@@ -422,6 +491,7 @@ public class InputDevice {
                     if (quiz.validator != null) {
                         if (quiz.validator.IsValid(name)) {
                             quiz.answer = name;
+
                             ResultOK = true;
                         } else {
                             System.out.println(quiz.validator.ErrorMessage());
@@ -433,20 +503,33 @@ public class InputDevice {
                     }
                 }
             }
+            if (quiz.validator instanceof AdminExistsValidator) {
+                AdminExistsValidator admValid = (AdminExistsValidator) (quiz.validator);
+                if (!admValid.getExist()) {
+                    break;
+                }
+            }
         }
 
         for (quiz answer : questions) {
             System.out.println(answer.answer);
         }
-        Person Admin = new Person();
-        Admin.setName(questions.get(5).answer);
-        Admin.setPassportID(questions.get(6).answer);
-        Admin.setLocation(new Location(questions.get(7).answer));
+        Person Admin = null;
+        AdminExistsValidator admValid = (AdminExistsValidator)(questions.get(5).validator);
+
+        if (questions.get(5).answer != null && admValid.getExist()) {
+            Admin = new Person();
+            Admin.setName(questions.get(6).answer);
+            Admin.setPassportID(questions.get(7).answer);
+            Admin.setLocation(new Location(questions.get(8).answer));
+
+        }
+
 
         return new StudyGroup(questions.get(0).answer,
                 new Coordinates(questions.get(1).answer),
                 Integer.parseInt(questions.get(2).answer),
-                FormOfEducation.values()[Integer.parseInt(questions.get(3).answer)],
+                FormOfEducation.NullString(questions.get(3).answer),
                 Semester.values()[Integer.parseInt(questions.get(4).answer)],
                 Admin);
 
@@ -486,17 +569,21 @@ public class InputDevice {
         for (quiz answer : questions) {
             System.out.println(answer.answer);
         }
-        Person Admin = new Person();
-        Admin.setName(questions.get(5).answer);
+
         FormOfEducation f = null;
-        if (questions.get(6).answer != null) {
-            Admin.setPassportID(questions.get(6).answer) ;
-        }
-        if (questions.get(7).answer != null) {
-            Admin.setLocation(new Location(questions.get(7).answer));
-        }
         if (questions.get(3).answer != null) {
             f = FormOfEducation.values()[Integer.parseInt(questions.get(3).answer)];
+        }
+
+        Person Admin = null;
+        AdminExistsValidator admValid = (AdminExistsValidator)(questions.get(5).validator);
+
+        if (questions.get(5).answer != null && admValid.getExist()) {
+            Admin = new Person();
+            Admin.setName(questions.get(6).answer);
+            Admin.setPassportID(questions.get(7).answer);
+            Admin.setLocation(new Location(questions.get(8).answer));
+
         }
 
         return new StudyGroup(questions.get(0).answer,
